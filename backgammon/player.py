@@ -40,7 +40,7 @@ class Player(AbstractPlayer):
         # list of possible steps
         self._steps = None
         # list of dices' values combinations
-        self.__steps = None
+        self._steps_ = None
         # locker of cells
         self._cell_locker = field._cell_locker
         # locker of status
@@ -56,39 +56,47 @@ class Player(AbstractPlayer):
             # two dices
             self._steps.append(sum(self._steps))
             # save source
-            self.__steps = self._steps.copy()
+            self._steps_ = self._steps.copy()
             # sort
-            self.__steps.sort()
+            self._steps_.sort()
             self._steps.sort()
+        
+        def should_pass() -> bool:
+            """Returns True if should pass, else False
 
-        # check steps on may play
-        with self._steps_locker:
+            Returns:
+                bool: True if should pass, else False
+            """
             f = False
-            # for every cell
+            # for every cell check if can move from it
             for _from in self._cells:
-                load_steps()
                 steps = self._steps.copy()
-                # if from this cell may move
                 if _from.index < 24 and len(_from) > 0 and _from[0].color == "red":
-                    # if can remove checkers, change steps
-                    for i in range(len(self._steps)):
-                        if steps[i] > 24 - _from.index:
-                            steps[i] = 24 - _from.index
-                    # check if can move cells from _from cell
+                    for i in range(len(steps)):
+                        if self._steps[i] is not None:
+                            if steps[i] > 24 - _from.index:
+                                steps[i] = 24 - _from.index
                     for _to in self._cells:
-                        if _to.index < 24 and _to != _from and (len(_to) == 0 or _to[0].color == "red") and \
+                        if _to.index < 25 and _to != _from and (len(_to) == 0 or _to[0].color == "red") and \
                                 _to.index - _from.index in steps:
                             f = True
                             break
-                # if has moves, carry on
                 if f:
-                    break
-            # else, pass move
+                    return False
             else:
-                return
+                return True
+
+        # load steps
+        with self._steps_locker:
+            load_steps()
 
         # move checkers
         while True:
+            # pass if cannot move
+            with self._steps_locker:
+                if should_pass():
+                    return
+            
             # select cell to move from
             if self._choose_from_cell() is None:
                 # if isn't chosen, restart
@@ -107,7 +115,7 @@ class Player(AbstractPlayer):
                 with self._steps_locker:
                     for i in range(len(self._steps)):
                         if self._steps[i] is not None:
-                            self._steps[i] = self.__steps.copy()[i]
+                            self._steps[i] = self._steps_.copy()[i]
                 continue
 
             # move checker
@@ -190,7 +198,7 @@ class Player(AbstractPlayer):
                     # else replace used step and max step with None and reload unused step
                     else:
                         self._steps = [None for _ in range(3)]
-                        self._steps[1 - index] = self.__steps[1 - index]
+                        self._steps[1 - index] = self._steps_[1 - index]
 
     def mousemotion_event_handler(self, event) -> None:
         """Handles mousemotion pygame event
