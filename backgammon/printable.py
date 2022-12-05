@@ -3,6 +3,7 @@
 
 from abc import ABCMeta, abstractmethod
 
+
 class Printable(metaclass=ABCMeta):
     """Printable class
     Describes printable object
@@ -10,6 +11,7 @@ class Printable(metaclass=ABCMeta):
     Methods:
         1) print(): prints object
     """
+
     @abstractmethod
     def print(self) -> None:
         """Prints object

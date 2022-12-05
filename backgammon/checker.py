@@ -1,9 +1,12 @@
 # checker.py
 # Contains Checker class
 
-import pygame
 from typing import Tuple
+
+import pygame
+
 from visible import Visible
+
 
 class Checker(Visible):
     """Checker(Visible) class
@@ -20,16 +23,16 @@ class Checker(Visible):
         1) TYPES: possible types for checker ("red" or "black")
     """
     TYPES = ("red", "black")
-    
+
     def __init__(self, screen: pygame.Surface, checker_color: str,
-                 position: Tuple[int], size: Tuple[int]) -> None:
+                 position: Tuple[int, int], size: Tuple[int, int]) -> None:
         """Constructor of Checker
 
         Args:
             screen (pygame.Surface): screen to print on
             checker_color (str): color of checker, must be in Checker.TYPES
             position (Tuple[int]): position of checker
-            size (Tuple[int]): size ofchecker
+            size (Tuple[int]): size of checker
         """
         # set color
         self._color = checker_color
@@ -41,7 +44,7 @@ class Checker(Visible):
         self._size = size
         # load image
         self._load_image(f"images/{self._color}.png")
-        
+
     @property
     def color(self) -> str:
         """Color of checker

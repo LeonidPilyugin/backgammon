@@ -2,11 +2,11 @@
 # Contains Player class
 
 import threading
-import pygame
 from typing import Tuple
-from field import Field
+
 from abstractplayer import AbstractPlayer
 from cell import Cell
+from field import Field
 
 
 class Player(AbstractPlayer):
@@ -22,7 +22,7 @@ class Player(AbstractPlayer):
         1) STATUS: tuple of possible statuses
     """
     STATUS = ("CHOOSE_FROM", "CHOOSE_TO", "WAIT")
-    
+
     def __init__(self, field: Field):
         """Player constructor
 
@@ -47,7 +47,7 @@ class Player(AbstractPlayer):
         self._status_locker = threading.Lock()
         # locker of steps
         self._steps_locker = threading.Lock()
-        
+
     def play(self, dices: Tuple[int]):
         def load_steps() -> None:
             """Loads combinations of dices"""
@@ -60,7 +60,7 @@ class Player(AbstractPlayer):
             # sort
             self.__steps.sort()
             self._steps.sort()
-            
+
         # check steps on may play
         with self._steps_locker:
             f = False
@@ -77,7 +77,7 @@ class Player(AbstractPlayer):
                     # check if can move cells from _from cell
                     for _to in self._cells:
                         if _to.index < 24 and _to != _from and (len(_to) == 0 or _to[0].color == "red") and \
-                            _to.index - _from.index in steps:
+                                _to.index - _from.index in steps:
                             f = True
                             break
                 # if has moves, carry on
@@ -86,21 +86,21 @@ class Player(AbstractPlayer):
             # else, pass move
             else:
                 return
-                
+
         # move checkers
         while True:
             # select cell to move from
             if self._choose_from_cell() is None:
                 # if isn't chosen, restart
                 continue
-            
+
             # change steps if can remove cell
             with self._steps_locker:
                 for i in range(len(self._steps)):
                     if self._steps[i] is not None and \
-                        self._steps[i] > 24 - self._from_cell.index:
+                            self._steps[i] > 24 - self._from_cell.index:
                         self._steps[i] = 24 - self._from_cell.index
-                
+
             # choose cell to move to
             if self._choose_to_cell() == self._from_cell:
                 # if isn't chosen, change steps to sources and restart
@@ -109,17 +109,17 @@ class Player(AbstractPlayer):
                         if self._steps[i] is not None:
                             self._steps[i] = self.__steps.copy()[i]
                 continue
-            
+
             # move checker
             self._move()
-            
+
             # if has steps, carry on
             with self._steps_locker:
                 if self._steps.count(None) < 3:
                     continue
             # else stop
             break
-        
+
     def _choose_from_cell(self) -> Cell:
         """Chooses cell to move from
 
@@ -132,19 +132,19 @@ class Player(AbstractPlayer):
         # set status
         with self._status_locker:
             self._status = "CHOOSE_FROM"
-            
+
         # wait untill from cell is chosen
         while True:
             with self._cell_locker:
                 if self._from_cell is not None:
                     break
-        
+
         # set status
         with self._status_locker:
             self._status = "WAIT"
         # return from cell
         return self._from_cell
-    
+
     def _choose_to_cell(self) -> Cell:
         """Chooses cell to move to
 
@@ -157,20 +157,19 @@ class Player(AbstractPlayer):
         # set status
         with self._status_locker:
             self._status = "CHOOSE_TO"
-        
+
         # wait untill to cell is chosen
         while True:
             with self._cell_locker:
                 if self._to_cell is not None:
                     break
-            
+
         # set status
         with self._status_locker:
             self._status = "WAIT"
         # return to cell
         return self._to_cell
-                
-    
+
     def _move(self) -> None:
         """Moves checker from self._from_cell to self._to_cell and reloads steps"""
         with self._steps_locker:
@@ -179,7 +178,7 @@ class Player(AbstractPlayer):
                 self._from_cell.move_checker(self._to_cell)
                 # get index of used step in steps
                 delta = self._to_cell.index - self._from_cell.index if self._to_cell.index < 24 else \
-                        24 - self._from_cell.index
+                    24 - self._from_cell.index
                 index = self._steps.index(delta)
                 # there is 1 possible step, fill steps with None
                 if self._steps.count(None) == 2:
@@ -192,7 +191,7 @@ class Player(AbstractPlayer):
                     else:
                         self._steps = [None for _ in range(3)]
                         self._steps[1 - index] = self.__steps[1 - index]
-        
+
     def mousemotion_event_handler(self, event) -> None:
         """Handles mousemotion pygame event
 
@@ -217,13 +216,13 @@ class Player(AbstractPlayer):
                         case "CHOOSE_TO":
                             for cell in self._cells:
                                 if cell.index != 25 and cell.index - self._from_cell.index in self._steps and \
-                                cell != self._from_cell and \
-                                (len(cell) == 0 or cell[0].color != "black"):
+                                        cell != self._from_cell and \
+                                        (len(cell) == 0 or cell[0].color != "black"):
                                     cell.highlight("suggest")
                                     if cell.isinside(position):
                                         cell.highlight("hover")
                                         break
-        
+
     def mousebuttondown_event_handler(self, event) -> None:
         """Handles mousebuttondown pygame event
 
@@ -251,10 +250,10 @@ class Player(AbstractPlayer):
                     case "CHOOSE_TO":
                         for cell in self._cells:
                             if cell.isinside(position) and \
-                            (cell.color == Cell.COLORS["hover"] or cell.color == Cell.COLORS["selected"]):
+                                    (cell.color == Cell.COLORS["hover"] or cell.color == Cell.COLORS["selected"]):
                                 self._to_cell = cell
                                 cell.highlight(None)
-                                self._state = "WAIT"
+                                self._status = "WAIT"
                                 for cell in self._cells:
                                     cell.highlight(None)
                                 break

@@ -1,10 +1,13 @@
 # dice.py
 # Contains Dice class
 
-import pygame
-from typing import Tuple
-from visible import Visible
 from random import randint
+from typing import Tuple
+
+import pygame
+
+from visible import Visible
+
 
 class Dice(Visible):
     """Dice(Visible) class
@@ -16,8 +19,9 @@ class Dice(Visible):
     Properties:
         1) value: value of dice
     """
+
     def __init__(self, screen: pygame.Surface,
-                 position: Tuple[int], size: Tuple[int]) -> None:
+                 position: Tuple[int, int], size: Tuple[int, int]) -> None:
         """Dice constructor
 
         Args:
@@ -35,8 +39,8 @@ class Dice(Visible):
         self._load_image()
         # throw
         self.throw()
-        
-    def _load_image(self) -> None:
+
+    def _load_image(self, path=None) -> None:
         # load each of 6 planes
         self._images = []
         for i in range(1, 7):
@@ -47,11 +51,11 @@ class Dice(Visible):
     def throw(self) -> None:
         # set random value from 1 to 6
         self._value = randint(1, 6)
-        
+
     def print(self) -> None:
         # print image of current value
-        self._screen.blit(self._images[self._value-1], self._position)
-        
+        self._screen.blit(self._images[self._value - 1], self._position)
+
     @property
     def value(self) -> int:
         """Value of dice

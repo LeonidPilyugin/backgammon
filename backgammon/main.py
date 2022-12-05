@@ -1,11 +1,13 @@
 # main.py
 # Run file to start game
 
-import pygame
 from threading import Thread
+
+import pygame
+
+from bot import Bot
 from field import Field
 from player import Player
-from bot import Bot
 
 # clock
 clock = pygame.time.Clock()
@@ -45,4 +47,3 @@ while is_running:
             case pygame.MOUSEBUTTONDOWN:
                 player1.mousebuttondown_event_handler(event)
                 player2.mousebuttondown_event_handler(event)
-    

@@ -4,6 +4,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import Tuple
 
+
 class AbstractPlayer(metaclass=ABCMeta):
     """AbstractPlayer class
     Describes backgammon player
@@ -11,8 +12,9 @@ class AbstractPlayer(metaclass=ABCMeta):
     Methods:
         1) play(dices: Tuple[int]): plays one backgammon step
     """
+
     @abstractmethod
-    def play(self, dices: Tuple[int]) -> None:
+    def play(self, dices: Tuple[int, int]) -> None:
         """Plays one backgammon step
 
         Args:
