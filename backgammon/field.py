@@ -30,55 +30,59 @@ class Field(Visible):
             size (Tuple[int]): size of field image
             players (Tuple[AbstractPlayer]): 2-element tuple of players
         """
-        # set screen
-        self._screen = screen
-        # set position
-        self._position = (0, 0)
-        # set size
-        self._size = size
-        # load image
-        self._load_image("images/field.png")
-        # list of two dices
-        self._dices = [Dice(screen, (200 + 100 * i, 450), (40, 40)) for i in range(2)]
-        # list of 26 cells (24 main and 2 of exited checkers)
+        
+        self._screen = screen  # set screen
+        self._position = (0, 0)  # set position
+        self._size = size  # set size
+        
+        self._load_image("images/field.png")  # load image
+        
+        self._dices = [Dice(screen, (200 + 100 * i, 450), (40, 40)) \
+            for i in range(2)]  # list of two dices
+        
         self._cells = [Cell(self._screen,
                             i,
                             15 if i == 0 or i == 12 else 0,
                             "red" if i == 0 else "black"
-                            if i == 12 else "") for i in range(0, 26)]
-        # players tuple
-        self._players = players
-        # cells locker
-        self._cell_locker = Lock()
+                            if i == 12 else "") \
+                                for i in range(0, 26)] # list of 26 cells (24 main and 2 of exited checkers)
+        
+        self._players = players  # players tuple
+        
+        self._cell_locker = Lock()  # cells locker
 
     def start(self) -> None:
         """Starts game"""
-        # while there are checkers of both colors, play game
-        while len(self._cells[24]) < 15 or len(self._cells[25]) < 15:
-            # throw dices
-            self._throw_dices()
-            # next players plays
-            self._players[0].play([self._dices[0].value, self._dices[1].value])
+        
+        while len(self._cells[24]) < 15 or len(self._cells[25]) < 15:  # while there are checkers of both colors, play game
+            self._throw_dices()  # throw dices
+            
+            self._players[0].play([self._dices[0].value, self._dices[1].value])  # next players plays
+            
             # if double, throw one more time
             if self._dices[0].value == self._dices[1].value:
                 continue
-            # shift players
-            self._players = self._players[1:] + self._players[:1]
+            
+            self._players = self._players[1:] + self._players[:1]  # shift players
 
     def _throw_dices(self) -> None:
         """Throws each dice"""
+        
         # throw each dice
         for dice in self._dices:
             dice.throw()
 
     def print(self) -> None:
         """Prints field"""
-        # print background
-        super().print()
+        
+        super().print()  # print background
+        
         # print dices
         for dice in self._dices:
             dice.print()
-        # print cells
-        with self._cell_locker:
+        
+        
+        with self._cell_locker:  # lock cells
+            # print cells
             for cell in self._cells:
                 cell.print()

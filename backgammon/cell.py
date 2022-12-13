@@ -29,18 +29,19 @@ class Cell(Printable):
         1) COLORS: dictionary of possible highlighting colors
     """
 
-    # dictionary of highlighting colors
-    COLORS = {"hover": "#f0f0f0", "selected": "#ffff00", "suggest": "#00ff00", None: None}
-    # size
-    _SIZE = (54, 376)
-    # tuple of x cells' and checkers' coordinates
-    _XS = [120, 175, 235, 290, 350, 405, 540, 600, 660, 720, 775, 835]
+    COLORS = {"hover": "#f0f0f0", "selected": "#ffff00",
+              "suggest": "#00ff00", None: None}  # dictionary of highlighting colors
+    
+    _SIZE = (54, 376)  # size
+    
+    _XS = [120, 175, 235, 290, 350, 405,
+           540, 600, 660, 720, 775, 835]  # tuple of x cells' and checkers' coordinates
     _XS.extend(reversed(_XS))
     _X0S = [-10, 930]
     _XS.extend(_X0S)
     _XS = tuple(_XS)
-    # tuple of y checkers' coordinates
-    _YS = list(reversed(range(505, 786, 20)))
+    
+    _YS = list(reversed(range(505, 786, 20)))  # tuple of y checkers' coordinates
     _YS.extend(list(range(85, 366, 20)))
     _YS = tuple(_YS)
 
@@ -53,17 +54,16 @@ class Cell(Printable):
             checkers (int): number of checkers in cell
             color (str): color of checkers
         """
-        # set screen
-        self._screen = screen
-        # set size
-        self._size = Cell._SIZE
-        # set index
-        self._index = index
-        # set position
+        
+        self._screen = screen  # set screen
+        self._size = Cell._SIZE  # set size
+        self._index = index  # set index
+        
         self._position = (Cell._XS[index], 85 if index == 24
-        else 460 if index == 25 else 460 if index < 12 else 85)
-        # set highlight color
-        self._color = None
+            else 460 if index == 25 else 460 if index < 12 else 85) # set position
+        
+        self._color = None  # set highlight color
+        
         # insert checkers
         self._checkers = []
         for _ in range(checkers):
@@ -75,7 +75,8 @@ class Cell(Printable):
         Returns:
             CellIterator: iterator
         """
-        return CellIter(self)
+        
+        return CellIter(self)  # return iterator
 
     def __len__(self) -> int:
         """Returns number of checkers
@@ -83,7 +84,8 @@ class Cell(Printable):
         Returns:
             int: number of checkers
         """
-        return len(self._checkers)
+        
+        return len(self._checkers)  # return length
 
     def __getitem__(self, key: int) -> Checker:
         """Returns checker by index (like in list)
@@ -94,7 +96,8 @@ class Cell(Printable):
         Returns:
             Checker: checker by index
         """
-        return self._checkers[key]
+        
+        return self._checkers[key]  # return checker
 
     @property
     def color(self) -> str:
@@ -103,7 +106,8 @@ class Cell(Printable):
         Returns:
             str: color of highlight
         """
-        return self._color
+        
+        return self._color  # return color
 
     @property
     def index(self) -> int:
@@ -112,7 +116,8 @@ class Cell(Printable):
         Returns:
             int: index of cell on field
         """
-        return self._index
+        
+        return self._index  # return index
 
     def highlight(self, value: str) -> None:
         """Sets highlight color by key in Cell.COLORS
@@ -123,9 +128,11 @@ class Cell(Printable):
         Raises:
             ValueError: in case of value not in keys of Cell.COLORS
         """
-        if value not in Cell.COLORS.keys():
-            raise ValueError("Value is incorrect")
-        self._color = Cell.COLORS[value]
+        
+        if value not in Cell.COLORS.keys():  # if value is incorrect
+            raise ValueError("Value is incorrect")  # throw exception
+        
+        self._color = Cell.COLORS[value]  # set color
 
     def move_checker(self, cell) -> None:
         """Moves checker to other cell
@@ -141,11 +148,16 @@ class Cell(Printable):
         Args:
             color (str): color of adding checker
         """
-        self._checkers.append(Checker(self._screen, color,
-                                      (self._position[0],
-                                       Cell._YS[len(self._checkers) + 15 * (self._index - 24)] if self._index > 23 else
-                                       Cell._YS[len(self._checkers) + 15 * (self._index // 12)]),
-                                      (50, 50)))
+        
+        # checker to append
+        c = Checker(self._screen, color,
+                    (self._position[0],
+                    Cell._YS[len(self._checkers) + 15 * (self._index - 24)] \
+                        if self._index > 23 else \
+                            Cell._YS[len(self._checkers) + 15 * (self._index // 12)]),
+                    (50, 50))
+        
+        self._checkers.append(c)  # append checker
 
     def _pop_checker(self) -> Checker:
         """Pops checker from this cell
@@ -153,12 +165,14 @@ class Cell(Printable):
         Returns:
             Checker: poped checker
         """
-        return self._checkers.pop()
+        
+        return self._checkers.pop()  # pop checker
 
     def print(self) -> None:
         # print all checkers
         for ch in self._checkers:
             ch.print()
+        
         # highligth cell if necessary
         if self._color is not None:
             pygame.draw.rect(self._screen, self._color,
@@ -174,6 +188,7 @@ class Cell(Printable):
         Returns:
             bool: True if position is inside cell, else False
         """
+        
         return self._position[0] < position[0] < self._position[0] + self._size[0] and \
                self._position[1] < position[1] < self._position[1] + self._size[1]
 
@@ -182,14 +197,16 @@ class CellIter:
     """Cell iterator object"""
 
     def __init__(self, cell: Cell) -> None:
-        self._data = cell._checkers
-        self._index = 0
+        self._data = cell._checkers  # set data
+        self._index = 0  # set index
 
     def __next__(self):
-        if self._index >= len(self._data):
-            raise StopIteration
-        self._index += 1
-        return self._data[self._index]
+        if self._index >= len(self._data):  # if index is too big
+            raise StopIteration  # stop iteration
+        
+        self._index += 1  # increase index
+        
+        return self._data[self._index]  # return value by index
 
     def __iter__(self):
         return self

@@ -14,6 +14,5 @@ class Printable(metaclass=ABCMeta):
 
     @abstractmethod
     def print(self) -> None:
-        """Prints object
-        """
+        """Prints object"""
         pass

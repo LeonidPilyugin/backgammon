@@ -9,42 +9,40 @@ from bot import Bot
 from field import Field
 from player import Player
 
-# clock
-clock = pygame.time.Clock()
-# size of screen
-SIZE = (1000, 935)
-# max fps
-FPS = 30
-# screen
-screen = pygame.display.set_mode(SIZE)
-# field
-f = Field(screen, SIZE, None)
-# players
-player1 = Player(f)
-player2 = Bot(f)
-# set players
-f._players = (player1, player2)
-# start game
-Thread(target=f.start, args=(), daemon=True).start()
+SIZE = (1000, 935)  # size of screen
+FPS = 30  # max fps
 
-# main cycle
-is_running = True
+clock = pygame.time.Clock()  # clock
+
+screen = pygame.display.set_mode(SIZE)  # screen
+
+f = Field(screen, SIZE, None)  # field
+
+player1 = Player(f)  # player
+player2 = Bot(f)  # bot
+
+f._players = (player1, player2)  # set players
+
+Thread(target=f.start, args=(), daemon=True).start()  # start game
+
+is_running = True  # is running flag
+
 while is_running:
-    # print field
-    f.print()
-    pygame.display.update()
-    # wait
-    clock.tick(FPS)
-    # handle events
-    for event in pygame.event.get():
-        match event.type:
-            case pygame.QUIT:
+    f.print()  # print all
+    pygame.display.update()  # update display
+    clock.tick(FPS)  # wait
+    
+    for event in pygame.event.get():  # handle events
+        match event.type:  # match event type
+            case pygame.QUIT:  # quit event
                 is_running = False
                 break
-            case pygame.MOUSEMOTION:
-                player1.move_mouse(event.pos)
-                player1.mousemotion_event_handler(event.pos)
+            
+            case pygame.MOUSEMOTION:  # mousemotion event
+                player1.move_mouse(event.pos)  # move mouse
+                player1.mousemotion_event_handler(event.pos)  # handle event
                 player2.mousemotion_event_handler(event)
-            case pygame.MOUSEBUTTONDOWN:
-                player1.mousebuttondown_event_handler(event.pos)
+            
+            case pygame.MOUSEBUTTONDOWN:  # mousebuttondown event
+                player1.mousebuttondown_event_handler(event.pos)  # handle event
                 player2.mousebuttondown_event_handler(event)

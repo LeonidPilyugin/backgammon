@@ -22,9 +22,11 @@ class Visible(Printable, metaclass=ABCMeta):
         Args:
             image_path (str): path to loading image
         """
-        self._image = pygame.image.load(image_path)
-        self._image = pygame.transform.scale(self._image, self._size)
+        
+        self._image = pygame.image.load(image_path)  # load image
+        self._image = pygame.transform.scale(self._image, self._size)  # scale image
 
     def print(self) -> None:
         """Prints object"""
-        self._screen.blit(self._image, self._position)
+        
+        self._screen.blit(self._image, self._position)  # print image
