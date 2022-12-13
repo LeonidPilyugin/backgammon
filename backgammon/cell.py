@@ -2,6 +2,8 @@
 # Contains Cell and CellIter classes
 
 from typing import Tuple
+from time import sleep
+from threading import Lock
 
 import pygame
 
@@ -44,6 +46,9 @@ class Cell(Printable):
     _YS = list(reversed(range(505, 786, 20)))  # tuple of y checkers' coordinates
     _YS.extend(list(range(85, 366, 20)))
     _YS = tuple(_YS)
+    
+    N = 100  # steps to move checker
+    TIME = 0.5 # time to move checker, seconds
 
     def __init__(self, screen: pygame.Surface, index: int, checkers: int, color: str) -> None:
         """Cell constructor
@@ -68,6 +73,11 @@ class Cell(Printable):
         self._checkers = []
         for _ in range(checkers):
             self._push_checker(color)
+            
+        # moving checker
+        self._moving_checker = None
+        # moving checker locker
+        self._moving_checker_locker = Lock()
 
     def __iter__(self):
         """Returns iterator of this cell (iterates throw checkers)
@@ -138,9 +148,33 @@ class Cell(Printable):
         """Moves checker to other cell
 
         Args:
-            cell (_type_): cell to move checker to
+            cell (Cell): cell to move checker to
         """
-        cell._push_checker(self._pop_checker().color)
+        
+        with self._moving_checker_locker:  # lock moving checker
+            self._moving_checker = self._pop_checker()  # set moving checker
+        
+        # start position
+        x0, y0 = (self._position[0], Cell._YS[len(self._checkers) + 15 * (self._index - 24)] \
+                        if self._index > 23 else \
+                            Cell._YS[len(self._checkers) + 15 * (self._index // 12)])
+        # end position
+        x, y = (cell._position[0],
+                        Cell._YS[len(cell._checkers) + 15 * (cell._index - 24)] \
+                        if cell._index > 23 else \
+                            Cell._YS[len(cell._checkers) + 15 * (cell._index // 12)])
+        
+        # move checker
+        for i in range(Cell.N):
+            with self._moving_checker_locker:  # lock mocing checker
+                self._moving_checker._position = ((x0 + (x - x0) * i / Cell.N,
+                                                y0 + (y - y0) * i / Cell.N))  # set position
+            sleep(Cell.TIME / Cell.N)  # wait
+            
+        cell._push_checker(self._moving_checker.color)  # push checker
+        
+        with self._moving_checker_locker:  # lock moving checker
+            self._moving_checker = None  # reset moving checker
 
     def _push_checker(self, color: str) -> None:
         """Adds checker to this cell
@@ -178,6 +212,11 @@ class Cell(Printable):
             pygame.draw.rect(self._screen, self._color,
                              (self._position[0], self._position[1],
                               self._size[0], self._size[1]), 5)
+            
+        # print moving checker
+        if self._moving_checker is not None:
+            with self._moving_checker_locker:
+                self._moving_checker.print()
 
     def isinside(self, position: Tuple[int]) -> bool:
         """Returns True if position is inside cell, else False

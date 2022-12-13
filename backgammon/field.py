@@ -81,8 +81,6 @@ class Field(Visible):
         for dice in self._dices:
             dice.print()
         
-        
-        with self._cell_locker:  # lock cells
-            # print cells
-            for cell in self._cells:
-                cell.print()
+        # print cells
+        for cell in self._cells:
+            cell.print()
