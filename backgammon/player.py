@@ -14,9 +14,10 @@ class Player(AbstractPlayer):
     Describes backgammon user player
     
     Methods:
-        1) play(dices: Tuple[int]): plays one backgammon step
-        2) mousemotion_event_handler(event: pygame.event): handles pygame.MOUSEMOTION event
-        3) mousebuttondown_event_handler(event: pygame.event): handles pygame.MOUSEBUTTONDOWN event
+        1) play(dices: Tuple[int, int]): plays one backgammon step
+        2) mousemotion_event_handler(position: Tuple[int, int]): handles pygame.MOUSEMOTION event
+        3) mousebuttondown_event_handler(position: Tuple[int, int]): handles pygame.MOUSEBUTTONDOWN event
+        4) move_mouse(position: Tuple[int, int]): moves mouse pointer
         
     Constants:
         1) STATUS: tuple of possible statuses
@@ -41,12 +42,25 @@ class Player(AbstractPlayer):
         self._steps = None
         # list of dices' values combinations
         self._steps_ = None
+        # mouse position
+        self._mouse_pos = (0, 0)
         # locker of cells
         self._cell_locker = field._cell_locker
         # locker of status
         self._status_locker = threading.Lock()
         # locker of steps
         self._steps_locker = threading.Lock()
+        # locker of mouse position
+        self._mouse_pos_locker = threading.Lock()
+
+    def move_mouse(self, position: Tuple[int, int]) -> None:
+        """Sets mouse position
+
+        Args:
+            position (Tuple[int, int]): mouse position
+        """
+        with self._mouse_pos_locker:
+            self._mouse_pos = position
 
     def play(self, dices: Tuple[int]):
         def load_steps() -> None:
@@ -60,7 +74,7 @@ class Player(AbstractPlayer):
             # sort
             self._steps_.sort()
             self._steps.sort()
-        
+
         def should_pass() -> bool:
             """Returns True if should pass, else False
 
@@ -96,7 +110,13 @@ class Player(AbstractPlayer):
             with self._steps_locker:
                 if should_pass():
                     return
-            
+
+            # highlight cells
+            with self._mouse_pos_locker:
+                with self._status_locker:
+                    self._status = "CHOOSE_FROM"
+                self.mousemotion_event_handler(self._mouse_pos)
+
             # select cell to move from
             if self._choose_from_cell() is None:
                 # if isn't chosen, restart
@@ -108,6 +128,12 @@ class Player(AbstractPlayer):
                     if self._steps[i] is not None and \
                             self._steps[i] > 24 - self._from_cell.index:
                         self._steps[i] = 24 - self._from_cell.index
+
+            # highlight cells
+            with self._mouse_pos_locker:
+                with self._status_locker:
+                    self._status = "CHOOSE_TO"
+                self.mousemotion_event_handler(self._mouse_pos)
 
             # choose cell to move to
             if self._choose_to_cell() == self._from_cell:
@@ -200,68 +226,97 @@ class Player(AbstractPlayer):
                         self._steps = [None for _ in range(3)]
                         self._steps[1 - index] = self._steps_[1 - index]
 
-    def mousemotion_event_handler(self, event) -> None:
+    def _highlight_mousemotion_from(self, position: Tuple[int, int]) -> None:
+        """Highlights cells if status is "CHOOSE_FROM" and event is MOUSEMOTION
+
+        Args:
+            position (Tuple[int, int]): mouse position
+        """
+        for cell in self._cells:
+            if len(cell) > 0 and cell[0].color == "red" and cell.index != 24:
+                cell.highlight("suggest")
+                if cell.isinside(position):
+                    cell.highlight("selected")
+                    break
+
+    def _highlight_mousemotion_to(self, position: Tuple[int, int]) -> None:
+        """Highlights cells if status is "CHOOSE_TO" and event is MOUSEMOTION
+
+        Args:
+            position (Tuple[int, int]): mouse position
+        """
+        for cell in self._cells:
+            if cell.index != 25 and cell.index - self._from_cell.index in self._steps and \
+                    cell != self._from_cell and \
+                    (len(cell) == 0 or cell[0].color != "black"):
+                cell.highlight("suggest")
+                if cell.isinside(position):
+                    cell.highlight("hover")
+                    break
+
+    def _highlight_mousebuttondown_from(self, position: Tuple[int, int]) -> None:
+        """Highlights cells if status is "CHOOSE_FROM" and event is MOUSENUTTONDOWN
+
+        Args:
+            position (Tuple[int, int]): mouse position
+        """
+        for cell in self._cells:
+            if len(cell) > 0 and cell[0].color == "red" and cell.index < 24:
+                cell.highlight("suggest")
+                if cell.isinside(position):
+                    for c in self._cells:
+                        c.highlight(None)
+                    cell.highlight("selected")
+                    self._status = "WAIT"
+                    self._from_cell = cell
+                    break
+        self._highlight_mousemotion_to(position)
+
+    def _highlight_mousebuttondown_to(self, position: Tuple[int, int]) -> None:
+        """Highlights cells if status is "CHOOSE_TO" and event is MOUSEBUTTONDOWN
+
+        Args:
+            position (Tuple[int, int]): mouse position
+        """
+        for cell in self._cells:
+            if cell.isinside(position) and \
+                    (cell.color == Cell.COLORS["hover"] or cell.color == Cell.COLORS["selected"]):
+                self._to_cell = cell
+                cell.highlight(None)
+                self._status = "WAIT"
+                for c in self._cells:
+                    c.highlight(None)
+                break
+
+    def mousemotion_event_handler(self, position: Tuple[int, int]) -> None:
         """Handles mousemotion pygame event
 
         Args:
-            event (Event): mousemotion pygame event
+            position (Tuple[int, int]): mouseposition
         """
         with self._status_locker:
             with self._cell_locker:
                 with self._steps_locker:
-                    # mouse position
-                    position = event.pos
                     match self._status:
                         # if choosing from, highlight possible from cells
                         case "CHOOSE_FROM":
-                            for cell in self._cells:
-                                if len(cell) > 0 and cell[0].color == "red" and cell.index != 24:
-                                    cell.highlight("suggest")
-                                    if cell.isinside(position):
-                                        cell.highlight("selected")
-                                        break
+                            self._highlight_mousemotion_from(position)
                         # if choosing to, highlight possible to cells
                         case "CHOOSE_TO":
-                            for cell in self._cells:
-                                if cell.index != 25 and cell.index - self._from_cell.index in self._steps and \
-                                        cell != self._from_cell and \
-                                        (len(cell) == 0 or cell[0].color != "black"):
-                                    cell.highlight("suggest")
-                                    if cell.isinside(position):
-                                        cell.highlight("hover")
-                                        break
+                            self._highlight_mousemotion_to(position)
 
-    def mousebuttondown_event_handler(self, event) -> None:
+    def mousebuttondown_event_handler(self, position: Tuple[int, int]) -> None:
         """Handles mousebuttondown pygame event
 
         Args:
-            event (Event): mousebuttondown pygame event
+            position (Tuple[int, int]): mouseposition
         """
         with self._status_locker:
             with self._cell_locker:
-                # mouse position
-                position = event.pos
                 match self._status:
                     # if choosing from, set from cell
                     case "CHOOSE_FROM":
-                        for cell in self._cells:
-                            if len(cell) > 0 and cell[0].color == "red" and cell.index < 24:
-                                cell.highlight("suggest")
-                                if cell.isinside(position):
-                                    for c in self._cells:
-                                        c.highlight(None)
-                                    cell.highlight("selected")
-                                    self._status = "WAIT"
-                                    self._from_cell = cell
-                                    break
+                        self._highlight_mousebuttondown_from(position)
                     # if choosing to, set to cell
                     case "CHOOSE_TO":
-                        for cell in self._cells:
-                            if cell.isinside(position) and \
-                                    (cell.color == Cell.COLORS["hover"] or cell.color == Cell.COLORS["selected"]):
-                                self._to_cell = cell
-                                cell.highlight(None)
-                                self._status = "WAIT"
-                                for cell in self._cells:
-                                    cell.highlight(None)
-                                break
+                        self._highlight_mousebuttondown_to(position)

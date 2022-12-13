@@ -42,8 +42,9 @@ while is_running:
                 is_running = False
                 break
             case pygame.MOUSEMOTION:
-                player1.mousemotion_event_handler(event)
+                player1.move_mouse(event.pos)
+                player1.mousemotion_event_handler(event.pos)
                 player2.mousemotion_event_handler(event)
             case pygame.MOUSEBUTTONDOWN:
-                player1.mousebuttondown_event_handler(event)
+                player1.mousebuttondown_event_handler(event.pos)
                 player2.mousebuttondown_event_handler(event)
