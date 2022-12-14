@@ -22,6 +22,7 @@ class Checker(Visible):
     Constants:
         1) TYPES: possible types for checker ("red" or "black")
     """
+    
     TYPES = ("red", "black")
 
     def __init__(self, screen: pygame.Surface, checker_color: str,
@@ -34,6 +35,7 @@ class Checker(Visible):
             position (Tuple[int]): position of checker
             size (Tuple[int]): size of checker
         """
+        
         # set color
         self._color = checker_color
         # set screen
@@ -42,6 +44,7 @@ class Checker(Visible):
         self._position = position
         # set size
         self._size = size
+        
         # load image
         self._load_image(f"images/{self._color}.png")
 
@@ -52,4 +55,5 @@ class Checker(Visible):
         Returns:
             str: color of checker
         """
+        
         return self._color
