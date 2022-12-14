@@ -1,47 +1,52 @@
-import threading
 from typing import Tuple
 
-import pygame
-
 from abstractplayer import AbstractPlayer
-from cell import Cell
 from field import Field
 
 
 class Bot(AbstractPlayer):
-    STATUS = ("CHOOSE_FROM", "CHOOSE_TO", "WAIT")
-
-    def __init__(self, field: Field):
+    def __init__(self, field: Field) -> None:
+        """Smartbot constructor
+                Args:
+                    field (Field): backgammon field
+                """
+        # set cells
         self._cells = field._cells
-        self._status = "WAIT"
-        self._from_cell = None
-        self._to_cell = None
+        # list of possible steps
         self._steps = None
+        # list of dices' values combinations
         self._steps_ = None
-        self._cell_locker = field._cell_locker
-        self._status_locker = threading.Lock()
-        self._steps_locker = threading.Lock()
 
-    def play(self, dices: Tuple[int]):
-        def load_steps():
+    def play(self, dices: Tuple[int]) -> None:
+        def load_steps() -> None:
+            """Loads combinations of dices"""
+            # one dice
             self._steps = [dices[0], dices[1]]
+            # two dices
             self._steps.append(sum(self._steps))
+            # save source
             self._steps_ = self._steps.copy()
+            # sort
             self._steps_.sort()
             self._steps.sort()
-            
+
         def should_pass() -> bool:
+            """Returns True if should pass, else False
+            Returns:
+                bool: True if should pass, else False
+            """
             f = False
+            # for every cell check if can move from it
             for _from in self._cells:
                 steps = self._steps.copy()
-                if _from.index < 24 and len(_from) > 0 and _from[0].color == "black":
+                if _from.index < 24 and len(_from) > 0 and _from[0].color == "red":
                     for i in range(len(steps)):
                         if self._steps[i] is not None:
-                            if steps[i] > 24 - Bot._conv_index(_from.index):
-                                steps[i] = 24 - Bot._conv_index(_from.index)
+                            if steps[i] > 24 - _from.index:
+                                steps[i] = 24 - _from.index
                     for _to in self._cells:
-                        if Bot._conv_index(_to.index) < 25 and _to != _from and (len(_to) == 0 or _to[0].color == "black") and \
-                                Bot._conv_index(_to.index) - Bot._conv_index(_from.index) in steps:
+                        if _to.index < 25 and _to != _from and (len(_to) == 0 or _to[0].color == "red") and \
+                                _to.index - _from.index in steps:
                             f = True
                             break
                 if f:
@@ -49,149 +54,83 @@ class Bot(AbstractPlayer):
             else:
                 return True
 
-        with self._steps_locker:
-            load_steps()
-            if should_pass():
-                return
+        load_steps()
+        while self._steps.count(0) != 3 and should_pass() is False:
+            self.move_checkers()
 
-        # SUS MOMENT
-        while True:
-            with self._steps_locker:
-                if should_pass():
-                    return
-            
-            if self._choose_from_cell() is None:
+    def move_checkers(self):
+        for i in range(24):
+            if self._is_possible(i):
                 continue
-
-            with self._steps_locker:
-                for i in range(len(self._steps)):
-                    if self._steps[i] is not None and \
-                            self._steps[i] > 24 - Bot._conv_index(self._from_cell.index):
-                        self._steps[i] = 24 - Bot._conv_index(self._from_cell.index)
-
-            if self._choose_to_cell() is None:
-                with self._steps_locker:
-                    for i in range(len(self._steps)):
-                        if self._steps[i] is not None:
-                            self._steps[i] = self._steps_.copy()[i]
+            elif Bot._conv_index(i) + self._steps[2] >= 24:
+                self._cells[i].move_checker(self._cells[25])
+                self._steps[2] = 0
+                if 24 - Bot._conv_index(i) > self._steps[1]:
+                    self._steps[0] = 0
+                    self._steps[1] = 0
+                elif 24 - Bot._conv_index(i) > self._steps[0]:
+                    self._steps[1] = 0
+                else:
+                    self._steps[0] = 0
+        for i in range(24):
+            if self._is_possible(i):
                 continue
+            elif len(self._cells[i]._checkers) >= 2 and \
+                    self._is_possible_move(Bot._conv_index(Bot._conv_index(i) + self._steps[0])) is False:
+                self._cells[i].move_checker(self._cells[Bot._conv_index(Bot._conv_index(i) + self._steps[0])])
+                self._steps[0] = 0
+                self._steps[2] = 0
+        for i in range(24):
+            if self._is_possible(i):
+                continue
+            elif len(self._cells[i]._checkers) >= 2 and \
+                    self._is_possible_move(Bot._conv_index(Bot._conv_index(i) + self._steps[1])) is False:
+                self._cells[i].move_checker(self._cells[Bot._conv_index(Bot._conv_index(i) + self._steps[1])])
+                self._steps[1] = 0
+                self._steps[2] = 0
+        for i in range(24):
+            if self._is_possible(i):
+                continue
+            elif len(self._cells[i]._checkers) >= 2 and \
+                    self._is_possible_move(Bot._conv_index(Bot._conv_index(i) + self._steps[2])) is False:
+                self._cells[i].move_checker(self._cells[Bot._conv_index(Bot._conv_index(i) + self._steps[2])])
+                self._steps[0] = 0
+                self._steps[1] = 0
+                self._steps[2] = 0
+        for i in range(24):
+            if self._is_possible(i):
+                continue
+            elif len(self._cells[i]._checkers) == 1 and \
+                    self._is_possible_move(Bot._conv_index(Bot._conv_index(i) + self._steps[0])) is False:
+                self._cells[i].move_checker(self._cells[Bot._conv_index(Bot._conv_index(i) + self._steps[0])])
+                self._steps[0] = 0
+                self._steps[2] = 0
+        for i in range(24):
+            if self._is_possible(i):
+                continue
+            elif len(self._cells[i]._checkers) == 1 and \
+                    self._is_possible_move(Bot._conv_index(Bot._conv_index(i) + self._steps[1])) is False:
+                self._cells[i].move_checker(self._cells[Bot._conv_index(Bot._conv_index(i) + self._steps[1])])
+                self._steps[1] = 0
+                self._steps[2] = 0
+        for i in range(24):
+            if self._is_possible(i):
+                continue
+            elif len(self._cells[i]._checkers) == 1 and \
+                    self._is_possible_move(Bot._conv_index(Bot._conv_index(i) + self._steps[2])) is False:
+                self._cells[i].move_checker(self._cells[Bot._conv_index(Bot._conv_index(i) + self._steps[2])])
+                self._steps[0] = 0
+                self._steps[1] = 0
+                self._steps[2] = 0
 
-            self._move()
+    def _is_possible(self, cell_number):
+        return True if (len(self._cells[cell_number]._checkers) != 0
+                        and self._cells[cell_number]._checkers[0]._color == "red") \
+                       or len(self._cells[cell_number]._checkers) == 0 else False
 
-            with self._steps_locker:
-                if self._steps.count(None) < 3:
-                    continue
-            break
+    def _is_possible_move(self, cell_number):
+        return True if len(self._cells[cell_number]._checkers) != 0 \
+                       and self._cells[cell_number]._checkers[0]._color == "red" else False
 
     def _conv_index(index: int) -> int:
         return 24 if index == 25 else 25 if index == 24 else 12 + index if index < 12 else index - 12
-
-    def _choose_from_cell(self) -> Cell:
-        with self._cell_locker:
-            self._from_cell = None
-
-        with self._status_locker:
-            self._status = "CHOOSE_FROM"
-
-        while True:
-            with self._cell_locker:
-                if self._from_cell is not None:
-                    break
-
-        with self._status_locker:
-            self._status = "WAIT"
-        return self._from_cell
-
-    def _choose_to_cell(self) -> Cell:
-        with self._cell_locker:
-            self._to_cell = None
-
-        with self._status_locker:
-            self._status = "CHOOSE_TO"
-
-        while True:
-            with self._cell_locker:
-                if self._to_cell is not None:
-                    if self._to_cell == self._from_cell:
-                        with self._status_locker:
-                            self._status = "WAIT"
-                        return None
-                    break
-
-        with self._status_locker:
-            self._status = "WAIT"
-
-        return self._to_cell
-
-    # SUS MOMENT
-    def _move(self):
-        with self._steps_locker:
-            with self._cell_locker:
-                self._from_cell.move_checker(self._to_cell)
-
-                delta = Bot._conv_index(self._to_cell.index) - \
-                        Bot._conv_index(self._from_cell.index) if self._to_cell.index < 24 else \
-                    12 - self._from_cell.index
-                index = self._steps.index(delta)
-                if self._steps.count(None) == 2:
-                    self._steps = [None for _ in range(3)]
-                else:
-                    if index == 2:
-                        self._steps = [None for _ in range(3)]
-                    else:
-                        self._steps = [None for _ in range(3)]
-                        self._steps[1 - index] = self._steps_[1 - index]
-
-    def mousemotion_event_handler(self, event: pygame.event) -> None:
-        with self._status_locker:
-            with self._cell_locker:
-                with self._steps_locker:
-                    position = event.pos
-                    match self._status:
-                        case "CHOOSE_FROM":
-                            for cell in self._cells:
-                                if len(cell) > 0 and cell[0].color == "black" and cell.index != 25:
-                                    cell.highlight("suggest")
-                                    if cell.isinside(position):
-                                        for c in self._cells:
-                                            c.highlight(None)
-                                        cell.highlight("selected")
-                                        break
-
-                        case "CHOOSE_TO":
-                            for cell in self._cells:
-                                if cell.index != 24 and Bot._conv_index(cell.index) - \
-                                        Bot._conv_index(self._from_cell.index) in self._steps and \
-                                        cell != self._from_cell and \
-                                        (len(cell) == 0 or cell[0].color != "red"):
-                                    cell.highlight("suggest")
-                                    if cell.isinside(position):
-                                        cell.highlight("hover")
-                                        break
-
-    def mousebuttondown_event_handler(self, event: pygame.event) -> None:
-        with self._status_locker:
-            with self._cell_locker:
-                position = event.pos
-                match self._status:
-                    case "CHOOSE_FROM":
-                        for cell in self._cells:
-                            if len(cell) > 0 and cell[0].color == "black" and cell.index < 24:
-                                cell.highlight("suggest")
-                                if cell.isinside(position):
-                                    for c in self._cells:
-                                        c.highlight(None)
-                                    cell.highlight("selected")
-                                    self._status = "WAIT"
-                                    self._from_cell = cell
-                                    break
-
-                    case "CHOOSE_TO":
-                        for cell in self._cells:
-                            if cell.isinside(position) and \
-                                    (cell.color == Cell.COLORS["hover"] or cell.color == Cell.COLORS["selected"]):
-                                self._to_cell = cell
-                                cell.highlight(None)
-                                for cell in self._cells:
-                                    cell.highlight(None)
-                                break
