@@ -54,7 +54,7 @@ class Field(Visible):
     def start(self) -> None:
         """Starts game"""
         
-        while len(self._cells[24]) < 15 or len(self._cells[25]) < 15:  # while there are checkers of both colors, play game
+        while len(self._cells[24]) < 15 and len(self._cells[25]) < 15:  # while there are checkers of both colors, play game
             self._throw_dices()  # throw dices
             
             self._players[0].play([self._dices[0].value, self._dices[1].value])  # next players plays

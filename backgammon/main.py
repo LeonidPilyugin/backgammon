@@ -2,6 +2,8 @@
 # Run file to start game
 
 from threading import Thread
+from tkinter import *
+from tkinter import messagebox
 
 import pygame
 
@@ -23,7 +25,8 @@ player2 = Bot(f)  # bot
 
 f._players = (player1, player2)  # set players
 
-Thread(target=f.start, args=(), daemon=True).start()  # start game
+game = Thread(target=f.start, args=(), daemon=True)
+game.start()  # start game
 
 is_running = True  # is running flag
 
@@ -44,3 +47,15 @@ while is_running:
             
             case pygame.MOUSEBUTTONDOWN:  # mousebuttondown event
                 player1.mousebuttondown_event_handler(event.pos)  # handle event
+                
+    if not game.is_alive():  # if game ended
+        if messagebox.askyesno(title="Игра окончена",
+                               message="Играть заново?"):  # if user wants to play again
+            f = Field(screen, SIZE, None)
+            player1 = Player(f)  # player
+            player2 = Bot(f)  # bot
+            f._players = (player1, player2)  # set players
+            game = Thread(target=f.start, args=(), daemon=True)
+            game.start()  # start game
+        else:  # else finish
+            is_running = False

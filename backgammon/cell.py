@@ -39,7 +39,7 @@ class Cell(Printable):
     _XS = [120, 175, 235, 290, 350, 405,
            540, 600, 660, 720, 775, 835]  # tuple of x cells' and checkers' coordinates
     _XS.extend(reversed(_XS))
-    _X0S = [-10, 930]
+    _X0S = [0, 930]
     _XS.extend(_X0S)
     _XS = tuple(_XS)
     
@@ -61,7 +61,7 @@ class Cell(Printable):
         """
         
         self._screen = screen  # set screen
-        self._size = Cell._SIZE  # set size
+        self._size = Cell._SIZE if index < 24 else (Cell._SIZE[0], Cell._SIZE[1]*2)  # set size
         self._index = index  # set index
         
         self._position = (Cell._XS[index], 85 if index == 24
@@ -150,6 +150,9 @@ class Cell(Printable):
         Args:
             cell (Cell): cell to move checker to
         """
+        
+        if cell.index == self.index:  # if cell isequal to self, do nothing
+            return
         
         with self._moving_checker_locker:  # lock moving checker
             self._moving_checker = self._pop_checker()  # set moving checker
