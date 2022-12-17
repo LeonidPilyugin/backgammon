@@ -18,44 +18,45 @@ clock = pygame.time.Clock()  # clock
 
 screen = pygame.display.set_mode(SIZE)  # screen
 
-f = Field(screen, SIZE, None)  # field
+field = Field(screen, SIZE, None)  # field
 
-player1 = Player(f)  # player
-player2 = Bot(f)  # bot
+player = Player(field)  # player
+bot = Bot(field)  # bot
 
-f._players = (player1, player2)  # set players
+field._players = (player, bot)  # set players
 
-game = Thread(target=f.start, args=(), daemon=True)
+game = Thread(target=field.start, args=(), daemon=True)
 game.start()  # start game
 
 is_running = True  # is running flag
 
 while is_running:
-    f.print()  # print all
+    field.print()  # print all
     pygame.display.update()  # update display
     clock.tick(FPS)  # wait
     
     for event in pygame.event.get():  # handle events
         match event.type:  # match event type
             case pygame.QUIT:  # quit event
-                is_running = False
+                if messagebox.askyesno(message="Do you want to exit?"):
+                    is_running = False
                 break
             
             case pygame.MOUSEMOTION:  # mousemotion event
-                player1.move_mouse(event.pos)  # move mouse
-                player1.mousemotion_event_handler(event.pos)  # handle event
+                player.move_mouse(event.pos)  # move mouse
+                player.mousemotion_event_handler(event.pos)  # handle event
             
             case pygame.MOUSEBUTTONDOWN:  # mousebuttondown event
-                player1.mousebuttondown_event_handler(event.pos)  # handle event
+                player.mousebuttondown_event_handler(event.pos)  # handle event
                 
     if not game.is_alive():  # if game ended
-        if messagebox.askyesno(title="Игра окончена",
-                               message="Играть заново?"):  # if user wants to play again
-            f = Field(screen, SIZE, None)
-            player1 = Player(f)  # player
-            player2 = Bot(f)  # bot
-            f._players = (player1, player2)  # set players
-            game = Thread(target=f.start, args=(), daemon=True)
+        if messagebox.askyesno(title="You won" if field.winner is player else "Game over",
+                               message="Play again?"):  # if user wants to play again
+            field = Field(screen, SIZE, None)
+            player = Player(field)  # player
+            bot = Bot(field)  # bot
+            field._players = (player, bot)  # set players
+            game = Thread(target=field.start, args=(), daemon=True)
             game.start()  # start game
         else:  # else finish
             is_running = False

@@ -73,11 +73,9 @@ class Cell(Printable):
         self._checkers = []
         for _ in range(checkers):
             self._push_checker(color)
-            
-        # moving checker
-        self._moving_checker = None
-        # moving checker locker
-        self._moving_checker_locker = Lock()
+        
+        self._moving_checker = None # moving checker
+        self._moving_checker_locker = Lock() # moving checker locker
 
     def __iter__(self):
         """Returns iterator of this cell (iterates throw checkers)

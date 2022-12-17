@@ -50,6 +50,8 @@ class Field(Visible):
         self._players = players  # players tuple
         
         self._cell_locker = Lock()  # cells locker
+        
+        self._winner = None  # winner
 
     def start(self) -> None:
         """Starts game"""
@@ -64,6 +66,18 @@ class Field(Visible):
                 continue
             
             self._players = self._players[1:] + self._players[:1]  # shift players
+            
+        # set winner
+        self._winner = self._players[-1]
+        
+    @property
+    def winner(self) -> AbstractPlayer:
+        """Returns winner of game
+
+        Returns:
+            AbstractPlayer: winner
+        """
+        return self._winner
 
     def _throw_dices(self) -> None:
         """Throws each dice"""

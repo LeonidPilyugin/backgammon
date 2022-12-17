@@ -39,14 +39,14 @@ class Bot(AbstractPlayer):
             # for every cell check if can move from it
             for _from in self._cells:
                 steps = self._steps.copy()
-                if _from.index < 24 and len(_from) > 0 and _from[0].color == "red":
+                if _from.index < 24 and len(_from) > 0 and _from[0].color == "black":
                     for i in range(len(steps)):
                         if self._steps[i] is not None:
-                            if steps[i] > 24 - _from.index:
-                                steps[i] = 24 - _from.index
+                            if steps[i] > 24 - Bot._conv_index(_from.index):
+                                steps[i] = 24 - Bot._conv_index(_from.index)
                     for _to in self._cells:
-                        if _to.index < 25 and _to != _from and (len(_to) == 0 or _to[0].color == "red") and \
-                                _to.index - _from.index in steps:
+                        if Bot._conv_index(_to.index) < 25 and _to != _from and (len(_to) == 0 or _to[0].color == "black") and \
+                                Bot._conv_index(_to.index) - Bot._conv_index(_from.index) in steps:
                             f = True
                             break
                 if f:
@@ -55,7 +55,7 @@ class Bot(AbstractPlayer):
                 return True
 
         load_steps()
-        while self._steps.count(0) != 3 and should_pass() is False:
+        while self._steps.count(0) != 3 and not should_pass():
             self.move_checkers()
 
     def move_checkers(self):
