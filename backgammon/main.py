@@ -14,6 +14,9 @@ from player import Player
 SIZE = (1000, 935)  # size of screen
 FPS = 30  # max fps
 
+pygame.display.set_icon(pygame.image.load("images/black.png"))  # set icon
+pygame.display.set_caption("Backgammon")  # set title
+
 clock = pygame.time.Clock()  # clock
 
 screen = pygame.display.set_mode(SIZE)  # screen
